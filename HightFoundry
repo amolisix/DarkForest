@@ -1,0 +1,121 @@
+const {
+  isMine,
+  isUnowned,
+  canHaveArtifact,
+} = await import('https://plugins.zkga.me/utils/utils.js');
+
+let viewport = ui.getViewport();
+class HighlightArtifact {
+    constructor() {
+        this.show = false;
+        this.artifacts = [];
+        this.my_artifacts = [];
+        this.renderPlanets = () => {
+            this.show = !this.show;
+            this.artifacts = [];
+            this.my_artifacts = [];
+            this.planetList.innerHTML = '';
+            // keep track of how many we have found
+            let count = 0, find_count = 0;
+            const countText = document.createElement('div');
+            this.planetList.appendChild(countText);
+            const unclaimedArtifacts = document.createElement('div');
+            this.planetList.appendChild(unclaimedArtifacts);
+            const findCountText = document.createElement('div');
+            this.planetList.appendChild(findCountText);
+            const findArtifacts = document.createElement('div');
+            this.planetList.appendChild(findArtifacts);
+            for (const planet of df.getAllPlanets()) {
+                // @ts-ignore
+                if (planet.location) {
+                    if (canHaveArtifact(planet) && planet.planetLevel ==4) {
+                        const planetEntry = document.createElement('div');
+                        planetEntry.innerText =
+                                '(' +
+                                    // @ts-ignore
+                                    planet.location.coords.x +
+                                    ', ' +
+                                    // @ts-ignore
+                                    planet.location.coords.y +
+                                    ')';
+                        planetEntry.addEventListener('click', function (){
+                            ui.centerPlanet(planet)
+                        });
+                        if (isMine(planet.owner)) {
+                            this.my_artifacts.push(planet);
+                            findArtifacts.appendChild(planetEntry);
+                            find_count++;
+                        } else if (isUnowned(planet)) {
+                            this.artifacts.push(planet);
+                            unclaimedArtifacts.appendChild(planetEntry);
+                            count++;
+                        }
+                    }
+                }
+            }
+            if (!this.show) {
+                this.artifacts = [];
+                this.my_artifacts = [];
+            }
+            if (count === 0) {
+                countText.innerText = 'you have not found any unclaimed artifacts yet';
+            }
+            else {
+                countText.innerText = 'you have found ' + count + ' unclaimed artifacts';
+            }
+            if (find_count > 0) {
+                findCountText.innerText = find_count + ' artifacts can find now';
+            } else {
+                findCountText.innerText = 'No artifacts can find now';
+            }
+        };
+    }
+    async render(container) {
+        console.log('rendered 1 artifacts finder');
+        const findArtifactsButton = document.createElement('button');
+        findArtifactsButton.innerText = 'Highlight artifacts!';
+        container.appendChild(findArtifactsButton);
+        container.appendChild(document.createElement('br'));
+        container.appendChild(document.createElement('br'));
+        findArtifactsButton.addEventListener('click', this.renderPlanets);
+        this.planetList = document.createElement('div');
+        container.appendChild(this.planetList);
+        this.planetList.style.maxHeight = '300px';
+        this.planetList.style.width = '400px';
+        this.planetList.style.overflowX = 'hidden';
+        this.planetList.style.overflowY = 'scroll';
+        console.log('rendered artifacts finder');
+    }
+    draw_highlight(ctx, planet) {
+        let { x, y } = planet.location.coords;
+          ctx.beginPath();
+          ctx.arc(
+            viewport.worldToCanvasX(x),
+            viewport.worldToCanvasY(y),
+            viewport.worldToCanvasDist(planet.planetLevel * 20),
+            0,
+            2 * Math.PI,
+          );
+          ctx.fill();
+          ctx.stroke();
+          ctx.closePath();
+    }
+    draw(ctx) {
+        ctx.save();
+        ctx.fillStyle = 'red';
+        ctx.strokeStyle = 'red';
+        for (let planet of this.artifacts) {
+          this.draw_highlight(ctx, planet);
+        }
+        ctx.fillStyle = 'green';
+        ctx.strokeStyle = 'green';
+        for (let planet of this.my_artifacts) {
+          this.draw_highlight(ctx, planet);
+        }
+        ctx.restore();
+    }
+}
+/**
+ * And don't forget to export it!
+ */
+export default HighlightArtifact;
