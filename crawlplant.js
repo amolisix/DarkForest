@@ -329,7 +329,7 @@ class Plugin {
     button.innerHTML = 'Crawl Plant!'
     button.onclick = () => {
       calculatePoi(this.minPlanetLevel, checkTypes);
-      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed,this.allowMultiCrawl);
+      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed, this.allowMultiCrawl);
     }
 
     let autoCrwalLabel = document.createElement('label');
@@ -347,7 +347,7 @@ class Plugin {
 
           setTimeout(() => {
             calculatePoi(this.minPlanetLevel, checkTypes);
-            crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed,this.allowMultiCrawl);
+            crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed, this.allowMultiCrawl);
           }, 0);
         }, 1000 * this.autoSeconds)
       } else {
@@ -506,7 +506,7 @@ function priorityCalculate(planetObject) {
 
 }
 
-function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse, minimumEnergyAllowed,allowMultiCrawl) {
+function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse, minimumEnergyAllowed, allowMultiCrawl) {
   debugger;
   //for each plant in poi
   for (let poiPlant in poi) {
@@ -527,7 +527,7 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
 
     for (let candidatePlant in candidates) {
 
-      crawlPlantMy(minPlanetLevel, maxEnergyPercent, poi[poiPlant][0], candidates[candidatePlant], checkTypes, minimumEnergyAllowed,allowMultiCrawl);
+      crawlPlantMy(minPlanetLevel, maxEnergyPercent, poi[poiPlant][0], candidates[candidatePlant], checkTypes, minimumEnergyAllowed, allowMultiCrawl);
 
     }
   }
@@ -585,15 +585,24 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
 
     // Rejected if has unconfirmed pending arrivals
     const unconfirmed = df.getUnconfirmedMoves().filter(move => move.to === candidate.locationId)
-    if (unconfirmed.length > 3) {
+    let energyUncomfired = 0;
+    for (let moves in unconfirmed) {
+      energyUncomfired = energyUncomfired + moves.forces;
+    }
+    if (unconfirmed.length > 4 || energyUncomfired >= candidate.energy * (candidate.defense / 100)) {
       continue;
     }
 
     // Rejected if has pending arrivals
     const arrivals = getArrivalsForPlanet(candidate.locationId);
-    if (arrivals.length > 3) {
+    let energyOntheWay = 0;
+    for (let moves in arrivals) {
+      energyOntheWay = energyOntheWay + moves.energyArriving;
+    }
+    if (arrivals.length + unconfirmed.length > 4 || energyOntheWay + energyUncomfired >= candidate.energy * (candidate.defense / 100)) {
       continue;
     }
+
 
     if (minimumEnergyAllowed === 0) minimumEnergyAllowed = 1
     else
