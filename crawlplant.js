@@ -40,17 +40,18 @@ const checkTypes = [];
 let poi = [];
 class Plugin {
   constructor() {
-    this.planetType =  PlanetType.SILVER_MINE;
+    this.planetType = PlanetType.SILVER_MINE;
     this.minimumEnergyAllowed = 15;
     this.minPlanetLevel = 3;
     this.maxEnergyPercent = 85;
 
     this.minPlantLevelToUse = 2;
     this.maxPlantLevelToUse = 5;
+    this.autoSeconds = 30;
 
   }
   render(container) {
-    container.style.width = '200px';
+    container.style.width = '300px';
 
     let stepperLabel = document.createElement('label');
     stepperLabel.innerText = 'Max % energy to spend';
@@ -107,7 +108,31 @@ class Plugin {
       }
     }
 
+    let autoSecondsLabel = document.createElement('label');
+    autoSecondsLabel.innerText = 'Every X seconds';
+    autoSecondsLabel.style.display = 'block';
 
+    let autoSecondsStepper = document.createElement('input');
+    autoSecondsStepper.type = 'range';
+    autoSecondsStepper.min = '30';
+    autoSecondsStepper.max = '600';
+    autoSecondsStepper.step = '30';
+    autoSecondsStepper.value = `${this.autoSeconds}`;
+    autoSecondsStepper.style.width = '80%';
+    autoSecondsStepper.style.height = '24px';
+
+    let autoSecondsInfo = document.createElement('span');
+    autoSecondsInfo.innerText = `${autoSecondsStepper.value} secs`;
+    autoSecondsInfo.style.float = 'right';
+
+    autoSecondsStepper.onchange = (evt) => {
+      try {
+        this.autoSeconds = parseInt(evt.target.value, 10);
+        autoSecondsInfo.innerText = `${this.autoSeconds} secs`;
+      } catch (e) {
+        console.error('could not parse auto seconds', e);
+      }
+    }
 
 
 
@@ -203,7 +228,7 @@ class Plugin {
     planetCheck.type = "checkbox";
     planetCheck.value = planetTypes.Planet;
     planetCheck.style.marginRight = "10px";
-    planetCheck.checked = false;
+    planetCheck.checked = true;
     planetCheck.onchange = (evt) => {
       if (evt.target.checked) {
         // add to arr
@@ -224,7 +249,7 @@ class Plugin {
     asteroidCheck.type = "checkbox";
     asteroidCheck.value = planetTypes.Asteroid;
     asteroidCheck.style.marginRight = "10px";
-    asteroidCheck.checked = false;
+    asteroidCheck.checked = true;
     asteroidCheck.onchange = (evt) => {
       if (evt.target.checked) {
         checkTypes.push(asteroidCheck.value);
@@ -243,7 +268,7 @@ class Plugin {
     foundryCheck.type = "checkbox";
     foundryCheck.value = planetTypes.Foundry;
     foundryCheck.style.marginRight = "10px";
-    foundryCheck.checked = false;
+    foundryCheck.checked = true;
     foundryCheck.onchange = (evt) => {
       if (evt.target.checked) {
         checkTypes.push(foundryCheck.value);
@@ -263,7 +288,7 @@ class Plugin {
     spaceRipCheck.type = "checkbox";
     spaceRipCheck.value = planetTypes.Spacetime_Rip;
     spaceRipCheck.style.marginRight = "10px";
-    spaceRipCheck.checked = false;
+    spaceRipCheck.checked = true;
     spaceRipCheck.onchange = (evt) => {
       if (evt.target.checked) {
         checkTypes.push(spaceRipCheck.value);
@@ -324,10 +349,36 @@ class Plugin {
       // }
 
       calculatePoi(this.minPlanetLevel, checkTypes);
-      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse,this.minimumEnergyAllowed);
+      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed);
     }
 
+    let autoCrwalLabel = document.createElement('label');
+    autoCrwalLabel.innerHTML = 'Automatic CrawlPlant';
+    autoCrwalLabel.style.paddingRight = "10px";
 
+    let autoCrawlPlantCheck = document.createElement('input');
+    autoCrawlPlantCheck.type = "checkbox";
+    autoCrawlPlantCheck.style.marginRight = "10px";
+    autoCrawlPlantCheck.checked = false;
+    autoCrawlPlantCheck.onchange = (evt) => {
+      if (evt.target.checked) {
+        this.sendTimer = setInterval(() => {
+          this.message.innerText = 'Auto CrawlPlant...';
+
+          setTimeout(() => {
+            // let [moves, total] = this.massMove();
+            // if (moves) {
+            //   this.message.innerText = `Sending ${moves} moves of ${total} total asteroids.`;
+            // }
+            calculatePoi(this.minPlanetLevel, checkTypes);
+            crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed);
+
+          }, 0);
+        }, 1000 * this.autoSeconds)
+      } else {
+        this.clearSendTimer();
+      }
+    };
 
     container.appendChild(stepperLabel);
     container.appendChild(stepper);
@@ -335,6 +386,12 @@ class Plugin {
     container.appendChild(minimumEnergyAllowedLabel);
     container.appendChild(minimumEnergyAllowedSelect);
     container.appendChild(percentminimumEnergyAllowed);
+
+    // Moves
+    container.appendChild(autoSecondsLabel);
+    container.appendChild(autoSecondsStepper);
+    container.appendChild(autoSecondsInfo);
+
     container.appendChild(levelLabel);
     container.appendChild(level);
     container.appendChild(levelLabelMinUse);
@@ -366,6 +423,10 @@ class Plugin {
 
     container.appendChild(button);
     container.appendChild(message);
+
+    // Auto Crwal Plant
+    container.appendChild(autoCrwalLabel);
+    container.appendChild(autoCrawlPlantCheck);
   }
 }
 
@@ -514,7 +575,7 @@ function priorityCalculate(planetObject) {
 
 }
 
-function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse,minimumEnergyAllowed) {
+function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse, minimumEnergyAllowed) {
 
   //for each plant in poi
   for (let poiPlant in poi) {
@@ -535,14 +596,14 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
 
     for (let candidatePlant in candidates) {
 
-      crawlPlantMy(minPlanetLevel, maxEnergyPercent, poi[poiPlant][0], candidates[candidatePlant], checkTypes,minimumEnergyAllowed);
+      crawlPlantMy(minPlanetLevel, maxEnergyPercent, poi[poiPlant][0], candidates[candidatePlant], checkTypes, minimumEnergyAllowed);
 
     }
   }
 
 }
 
-function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant, checkTypes ,minimumEnergyAllowed = 0) {
+function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant, checkTypes, minimumEnergyAllowed = 0) {
   // let distancePoiMap = new map();
   // let typePoiMap = new map();
   // let comboMap = new map();
@@ -620,7 +681,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
     const energyArriving = minimumEnergyAllowed + (candidate.energy * (candidate.defense / 100));
     // needs to be a whole number for the contract
     const energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
-    if (energyLeft - energyNeeded < candidatePlant.energyCap * (100 - maxEnergyPercent)*0.01) {
+    if (energyLeft - energyNeeded < candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01) {
       continue;
     }
 
