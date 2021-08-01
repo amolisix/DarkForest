@@ -1,6 +1,11 @@
 // Crawl Planets
 //
 // Capture unowned planets around you!
+const {
+  isMine,
+  isUnowned,
+  canHaveArtifact,
+} = await import('https://plugins.zkga.me/utils/utils.js');
 
 const planetTypes = {
   'Planet': 0,
@@ -481,7 +486,8 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
     candidates = candidates_Ori.filter(p => (
       p.owner === df.account &&
       p.planetLevel >= minPlantLevelToUse &&
-      p.planetLevel <= maxPlantLevelToUse
+      p.planetLevel <= maxPlantLevelToUse &&
+      !canHaveArtifact(p)
     )).sort((a, b) => distance(poi[poiPlant][0], a) - distance(poi[poiPlant][0], b));
 
     for (let candidatePlant in candidates) {
