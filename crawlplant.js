@@ -482,7 +482,7 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
       p.owner === df.account &&
       p.planetLevel >= minPlantLevelToUse &&
       p.planetLevel <= maxPlantLevelToUse
-    )).sort((a, b) =>  distance(poiPlant, a) - distance(poiPlant, b));
+    )).sort((a, b) =>  distance(poi[poiPlant][0], a) - distance(poi[poiPlant][0], b));
 
     for (let candidatePlant in candidates) {
 
