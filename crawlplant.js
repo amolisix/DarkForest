@@ -259,26 +259,31 @@ class Plugin {
     button.style.marginBottom = '10px';
     button.innerHTML = 'Crawl from selected!'
     button.onclick = () => {
-      let planet = ui.getSelectedPlanet();
-      if (planet) {
-        // message.innerText = 'Please wait...';
-        // let moves = capturePlanets(
-        //   planet.locationId,
-        //   this.minPlanetLevel,
-        //   this.maxEnergyPercent,
-        //   checkTypes,
-        // );
-        // message.innerText = `Crawling ${moves} ${typeNames[this.planetType]}s.`;
+      // let planet = ui.getSelectedPlanet();
+      // if (planet) {
+      //   // message.innerText = 'Please wait...';
+      //   // let moves = capturePlanets(
+      //   //   planet.locationId,
+      //   //   this.minPlanetLevel,
+      //   //   this.maxEnergyPercent,
+      //   //   checkTypes,
+      //   // );
+      //   // message.innerText = `Crawling ${moves} ${typeNames[this.planetType]}s.`;
 
-        calculatePoi(this.minPlanetLevel, checkTypes);
-        crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse);
+      //   calculatePoi(this.minPlanetLevel, checkTypes);
+      //   crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse);
 
 
-      } else {
-        message.innerText = 'No planet selected.';
-      }
+      // } else {
+      //   message.innerText = 'No planet selected.';
+      // }
+
+      calculatePoi(this.minPlanetLevel, checkTypes);
+      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse);
     }
 
+
+    
     container.appendChild(stepperLabel);
     container.appendChild(stepper);
     container.appendChild(percent);
@@ -319,7 +324,7 @@ class Plugin {
 export default Plugin;
 
 
-function capturePlanets(fromId, minCaptureLevel, maxDistributeEnergyPercent, checkTypes) {
+/* function capturePlanets(fromId, minCaptureLevel, maxDistributeEnergyPercent, checkTypes) {
 
   checkTypes = JSON.parse('[' + String(checkTypes) + ']')
 
@@ -392,7 +397,7 @@ function capturePlanets(fromId, minCaptureLevel, maxDistributeEnergyPercent, che
   }
 
   return moves;
-}
+} */
 
 function getArrivalsForPlanet(planetId) {
   return df.getAllVoyages().filter(arrival => arrival.toPlanet === planetId).filter(p => p.arrivalTime > Date.now() / 1000);
@@ -477,7 +482,7 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
       p.owner === df.account &&
       p.planetLevel >= minPlantLevelToUse &&
       p.planetLevel <= maxPlantLevelToUse
-    ));
+    )).sort((a, b) =>  distance(poiPlant, a) - distance(poiPlant, b));
 
     for (let candidatePlant in candidates) {
 
