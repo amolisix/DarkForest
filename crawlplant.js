@@ -46,6 +46,7 @@ class Plugin {
     this.maxPlantLevelToUse = 5;
     this.autoSeconds = 30;
     this.message = document.createElement('div');
+    this.allowMultiCrawl = false;
 
   }
   render(container) {
@@ -328,7 +329,7 @@ class Plugin {
     button.innerHTML = 'Crawl Plant!'
     button.onclick = () => {
       calculatePoi(this.minPlanetLevel, checkTypes);
-      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed);
+      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed,this.allowMultiCrawl);
     }
 
     let autoCrwalLabel = document.createElement('label');
@@ -346,12 +347,28 @@ class Plugin {
 
           setTimeout(() => {
             calculatePoi(this.minPlanetLevel, checkTypes);
-            crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed);
+            crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed,this.allowMultiCrawl);
           }, 0);
         }, 1000 * this.autoSeconds)
       } else {
         this.message.innerText = 'CrawlPlant by Hand';
         this.clearSendTimer();
+      }
+    };
+
+    let allowMultiCrawlLabel = document.createElement('label');
+    allowMultiCrawlLabel.innerHTML = 'Allow Multi Crawl _______';
+    allowMultiCrawlLabel.style.paddingRight = "10px";
+
+    let allowMultiCrawlPlantCheck = document.createElement('input');
+    allowMultiCrawlPlantCheck.type = "checkbox";
+    allowMultiCrawlPlantCheck.style.marginRight = "10px";
+    allowMultiCrawlPlantCheck.checked = false;
+    allowMultiCrawlPlantCheck.onchange = (evt) => {
+      if (evt.target.checked) {
+        this.allowMultiCrawl = True;
+      } else {
+        this.allowMultiCrawl = false;
       }
     };
 
@@ -399,6 +416,10 @@ class Plugin {
     container.appendChild(button);
     container.appendChild(message);
 
+    //allowMultiCrawl
+    container.appendChild(allowMultiCrawlLabel);
+    container.appendChild(allowMultiCrawlPlantCheck);
+
     // Auto Crwal Plant
     container.appendChild(autoCrwalLabel);
     container.appendChild(autoCrawlPlantCheck);
@@ -413,7 +434,7 @@ class Plugin {
   destroy() {
     this.clearSendTimer()
   }
-  
+
 }
 
 export default Plugin;
@@ -485,7 +506,7 @@ function priorityCalculate(planetObject) {
 
 }
 
-function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse, minimumEnergyAllowed) {
+function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse, minimumEnergyAllowed,allowMultiCrawl) {
   debugger;
   //for each plant in poi
   for (let poiPlant in poi) {
@@ -506,14 +527,14 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
 
     for (let candidatePlant in candidates) {
 
-      crawlPlantMy(minPlanetLevel, maxEnergyPercent, poi[poiPlant][0], candidates[candidatePlant], checkTypes, minimumEnergyAllowed);
+      crawlPlantMy(minPlanetLevel, maxEnergyPercent, poi[poiPlant][0], candidates[candidatePlant], checkTypes, minimumEnergyAllowed,allowMultiCrawl);
 
     }
   }
 
 }
 
-function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant, checkTypes, minimumEnergyAllowed = 0) {
+function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant, checkTypes, minimumEnergyAllowed = 0, allowMultiCrawl = false) {
   checkTypes = JSON.parse('[' + String(checkTypes) + ']')
 
   let candidateCapturePlants;
@@ -542,7 +563,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
 
   // Rejected if has pending outbound moves
   const unconfirmed = df.getUnconfirmedMoves().filter(move => move.from === from.locationId)
-  if (unconfirmed.length > 4 ) {
+  if (unconfirmed.length > 4) {
     return 0;
   }
 
@@ -564,13 +585,13 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
 
     // Rejected if has unconfirmed pending arrivals
     const unconfirmed = df.getUnconfirmedMoves().filter(move => move.to === candidate.locationId)
-    if (unconfirmed.length > 4) {
+    if (unconfirmed.length > 3) {
       continue;
     }
 
     // Rejected if has pending arrivals
     const arrivals = getArrivalsForPlanet(candidate.locationId);
-    if (arrivals.length > 4) {
+    if (arrivals.length > 3) {
       continue;
     }
 
@@ -581,7 +602,16 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
     // needs to be a whole number for the contract
     const energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
     if (energyLeft - energyNeeded < candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01) {
-      continue;
+
+      if (allowMultiCrawl === true) {
+        if (energyLeft <= energyNeeded * 0.5)
+          continue;
+        else {
+          energyNeeded = energyLeft - candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01;
+        }
+      }
+      else
+        continue;
     }
 
 
