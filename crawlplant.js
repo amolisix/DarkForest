@@ -34,9 +34,6 @@ const typeNames = Object.keys(planetTypes);
 
 const checkTypes = [];
 
-//point of interest
-//let poi = new Map();
-
 let poi = [];
 class Plugin {
   constructor() {
@@ -48,6 +45,7 @@ class Plugin {
     this.minPlantLevelToUse = 2;
     this.maxPlantLevelToUse = 5;
     this.autoSeconds = 30;
+    this.message = document.createElement('div');
 
   }
   render(container) {
@@ -115,7 +113,7 @@ class Plugin {
     let autoSecondsStepper = document.createElement('input');
     autoSecondsStepper.type = 'range';
     autoSecondsStepper.min = '30';
-    autoSecondsStepper.max = '600';
+    autoSecondsStepper.max = '6000';
     autoSecondsStepper.step = '30';
     autoSecondsStepper.value = `${this.autoSeconds}`;
     autoSecondsStepper.style.width = '80%';
@@ -228,7 +226,7 @@ class Plugin {
     planetCheck.type = "checkbox";
     planetCheck.value = planetTypes.Planet;
     planetCheck.style.marginRight = "10px";
-    planetCheck.checked = true;
+    planetCheck.checked = false;
     planetCheck.onchange = (evt) => {
       if (evt.target.checked) {
         // add to arr
@@ -249,7 +247,7 @@ class Plugin {
     asteroidCheck.type = "checkbox";
     asteroidCheck.value = planetTypes.Asteroid;
     asteroidCheck.style.marginRight = "10px";
-    asteroidCheck.checked = true;
+    asteroidCheck.checked = false;
     asteroidCheck.onchange = (evt) => {
       if (evt.target.checked) {
         checkTypes.push(asteroidCheck.value);
@@ -268,7 +266,7 @@ class Plugin {
     foundryCheck.type = "checkbox";
     foundryCheck.value = planetTypes.Foundry;
     foundryCheck.style.marginRight = "10px";
-    foundryCheck.checked = true;
+    foundryCheck.checked = false;
     foundryCheck.onchange = (evt) => {
       if (evt.target.checked) {
         checkTypes.push(foundryCheck.value);
@@ -288,7 +286,7 @@ class Plugin {
     spaceRipCheck.type = "checkbox";
     spaceRipCheck.value = planetTypes.Spacetime_Rip;
     spaceRipCheck.style.marginRight = "10px";
-    spaceRipCheck.checked = true;
+    spaceRipCheck.checked = false;
     spaceRipCheck.onchange = (evt) => {
       if (evt.target.checked) {
         checkTypes.push(spaceRipCheck.value);
@@ -327,27 +325,8 @@ class Plugin {
     button.style.width = '100%';
     button.style.marginTop = '10px';
     button.style.marginBottom = '10px';
-    button.innerHTML = 'Crawl from selected!'
+    button.innerHTML = 'Crawl Plant!'
     button.onclick = () => {
-      // let planet = ui.getSelectedPlanet();
-      // if (planet) {
-      //   // message.innerText = 'Please wait...';
-      //   // let moves = capturePlanets(
-      //   //   planet.locationId,
-      //   //   this.minPlanetLevel,
-      //   //   this.maxEnergyPercent,
-      //   //   checkTypes,
-      //   // );
-      //   // message.innerText = `Crawling ${moves} ${typeNames[this.planetType]}s.`;
-
-      //   calculatePoi(this.minPlanetLevel, checkTypes);
-      //   crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse);
-
-
-      // } else {
-      //   message.innerText = 'No planet selected.';
-      // }
-
       calculatePoi(this.minPlanetLevel, checkTypes);
       crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed);
     }
@@ -366,16 +345,12 @@ class Plugin {
           this.message.innerText = 'Auto CrawlPlant...';
 
           setTimeout(() => {
-            // let [moves, total] = this.massMove();
-            // if (moves) {
-            //   this.message.innerText = `Sending ${moves} moves of ${total} total asteroids.`;
-            // }
             calculatePoi(this.minPlanetLevel, checkTypes);
             crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse, this.minimumEnergyAllowed);
-
           }, 0);
         }, 1000 * this.autoSeconds)
       } else {
+        this.message.innerText = 'CrawlPlant by Hand';
         this.clearSendTimer();
       }
     };
@@ -427,86 +402,21 @@ class Plugin {
     // Auto Crwal Plant
     container.appendChild(autoCrwalLabel);
     container.appendChild(autoCrawlPlantCheck);
+    container.appendChild(this.message);
   }
+  clearSendTimer() {
+    if (this.sendTimer) {
+      clearInterval(this.sendTimer);
+    }
+  }
+
+  destroy() {
+    this.clearSendTimer()
+  }
+  
 }
 
 export default Plugin;
-
-
-/* function capturePlanets(fromId, minCaptureLevel, maxDistributeEnergyPercent, checkTypes) {
-
-  checkTypes = JSON.parse('[' + String(checkTypes) + ']')
-
-  const planet = df.getPlanetWithId(fromId);
-  const from = df.getPlanetWithId(fromId);
-
-  const silverBudget = Math.floor(from.silver);
-
-  // Rejected if has pending outbound moves
-  const unconfirmed = df.getUnconfirmedMoves().filter(move => move.from === fromId)
-  if (unconfirmed.length !== 0) {
-    return 0;
-  }
-
-  const candidates_ = df.getPlanetsInRange(fromId, maxDistributeEnergyPercent)
-    .filter(p => (
-      p.owner !== df.account &&
-      players.includes(p.owner) &&
-      p.planetLevel >= minCaptureLevel &&
-      checkTypes.includes(p.planetType)
-    ))
-    .map(to => {
-      return [to, distance(from, to)]
-    })
-    .sort((a, b) => a[1] - b[1]);
-
-  let i = 0;
-  const energyBudget = Math.floor((maxDistributeEnergyPercent / 100) * planet.energy);
-
-  let energySpent = 0;
-  let moves = 0;
-  let silverNeed = 0;
-  let silverSpent = 0;
-  while (energyBudget - energySpent > 0 && i < candidates_.length) {
-
-    const energyLeft = energyBudget - energySpent;
-    const silverLeft = silverBudget - silverSpent;
-
-    // Remember its a tuple of candidates and their distance
-    const candidate = candidates_[i++][0];
-
-    // Rejected if has unconfirmed pending arrivals
-    const unconfirmed = df.getUnconfirmedMoves().filter(move => move.to === candidate.locationId)
-    if (unconfirmed.length !== 0) {
-      continue;
-    }
-
-    // Rejected if has pending arrivals
-    const arrivals = getArrivalsForPlanet(candidate.locationId);
-    if (arrivals.length !== 0) {
-      continue;
-    }
-
-    const energyArriving = (candidate.energyCap * 0.15) + (candidate.energy * (candidate.defense / 100));
-    // needs to be a whole number for the contract
-    const energyNeeded = Math.ceil(df.getEnergyNeededForMove(fromId, candidate.locationId, energyArriving));
-    if (energyLeft - energyNeeded < 0) {
-      continue;
-    }
-
-    if (from.planetType === 1 && candidate.planetType === 0) {
-      silverNeed = candidate.silverCap > silverLeft ? silverLeft : candidate.silverCap;
-      silverSpent += silverNeed;
-    }
-
-    df.move(fromId, candidate.locationId, energyNeeded, silverNeed);
-
-    energySpent += energyNeeded;
-    moves += 1;
-  }
-
-  return moves;
-} */
 
 function getArrivalsForPlanet(planetId) {
   return df.getAllVoyages().filter(arrival => arrival.toPlanet === planetId).filter(p => p.arrivalTime > Date.now() / 1000);
@@ -576,7 +486,7 @@ function priorityCalculate(planetObject) {
 }
 
 function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse, minimumEnergyAllowed) {
-
+  debugger;
   //for each plant in poi
   for (let poiPlant in poi) {
     let candidates_Ori;
@@ -604,9 +514,6 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
 }
 
 function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant, checkTypes, minimumEnergyAllowed = 0) {
-  // let distancePoiMap = new map();
-  // let typePoiMap = new map();
-  // let comboMap = new map();
   checkTypes = JSON.parse('[' + String(checkTypes) + ']')
 
   let candidateCapturePlants;
@@ -635,7 +542,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
 
   // Rejected if has pending outbound moves
   const unconfirmed = df.getUnconfirmedMoves().filter(move => move.from === from.locationId)
-  if (unconfirmed.length !== 0) {
+  if (unconfirmed.length > 4 ) {
     return 0;
   }
 
@@ -657,23 +564,15 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
 
     // Rejected if has unconfirmed pending arrivals
     const unconfirmed = df.getUnconfirmedMoves().filter(move => move.to === candidate.locationId)
-    if (unconfirmed.length !== 0) {
+    if (unconfirmed.length > 4) {
       continue;
     }
 
     // Rejected if has pending arrivals
     const arrivals = getArrivalsForPlanet(candidate.locationId);
-    if (arrivals.length !== 0) {
+    if (arrivals.length > 4) {
       continue;
     }
-
-    // const energyArriving = (candidate.energyCap * 0.15) + (candidate.energy * (candidate.defense / 100));
-    // // needs to be a whole number for the contract
-    // const energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
-    // if (energyLeft - energyNeeded < candidatePlant.energyCap * (100 - maxEnergyPercent)*0.01) {
-    //   continue;
-    // }
-    // //set minimum above energy to % or 1 (if 0%), depending on minimumEnergyAllowed value
 
     if (minimumEnergyAllowed === 0) minimumEnergyAllowed = 1
     else
