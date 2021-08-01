@@ -32,6 +32,7 @@ let poi = [];
 class Plugin {
   constructor() {
     this.planetType = 1;
+    this.minimumEnergyAllowed = 15;
     this.minPlanetLevel = 3;
     this.maxEnergyPercent = 85;
 
@@ -67,6 +68,36 @@ class Plugin {
         console.error('could not parse energy percent', e);
       }
     }
+
+
+    let minimumEnergyAllowedLabel = document.createElement('label');
+    minimumEnergyAllowedLabel.innerText = '% energy to fill after capture';
+    minimumEnergyAllowedLabel.style.display = 'block';
+
+    let minimumEnergyAllowedSelect = document.createElement('input');
+    minimumEnergyAllowedSelect.type = 'range';
+    minimumEnergyAllowedSelect.min = '0';
+    minimumEnergyAllowedSelect.max = '100';
+    minimumEnergyAllowedSelect.step = '1';
+    minimumEnergyAllowedSelect.value = `${this.minimumEnergyAllowed}`;
+    minimumEnergyAllowedSelect.style.width = '80%';
+    minimumEnergyAllowedSelect.style.height = '24px';
+
+    let percentminimumEnergyAllowed = document.createElement('span');
+    percentminimumEnergyAllowed.innerText = `${minimumEnergyAllowedSelect.value}%`;
+    percentminimumEnergyAllowed.style.float = 'right';
+
+    minimumEnergyAllowedSelect.onchange = (evt) => {
+      if (parseInt(evt.target.value, 10) === 0) percentminimumEnergyAllowed.innerText = `1 energy`;
+      else
+        percentminimumEnergyAllowed.innerText = `${evt.target.value}%`;
+      try {
+        this.minimumEnergyAllowed = parseInt(evt.target.value, 10);
+      } catch (e) {
+        console.error('could not parse minimum energy allowed percent', e);
+      }
+    }
+
 
 
 
@@ -284,7 +315,7 @@ class Plugin {
       // }
 
       calculatePoi(this.minPlanetLevel, checkTypes);
-      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse);
+      crawlPlantForPoi(this.minPlanetLevel, this.maxEnergyPercent, this.minPlantLevelToUse, this.maxPlantLevelToUse,this.minimumEnergyAllowed);
     }
 
 
@@ -292,6 +323,9 @@ class Plugin {
     container.appendChild(stepperLabel);
     container.appendChild(stepper);
     container.appendChild(percent);
+    container.appendChild(minimumEnergyAllowedLabel);
+    container.appendChild(minimumEnergyAllowedSelect);
+    container.appendChild(percentminimumEnergyAllowed);
     container.appendChild(levelLabel);
     container.appendChild(level);
     container.appendChild(levelLabelMinUse);
@@ -471,7 +505,7 @@ function priorityCalculate(planetObject) {
 
 }
 
-function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse) {
+function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse,minimumEnergyAllowed) {
 
   //for each plant in poi
   for (let poiPlant in poi) {
@@ -492,14 +526,14 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
 
     for (let candidatePlant in candidates) {
 
-      crawlPlantMy(minPlanetLevel, maxEnergyPercent, poi[poiPlant][0], candidates[candidatePlant], checkTypes);
+      crawlPlantMy(minPlanetLevel, maxEnergyPercent, poi[poiPlant][0], candidates[candidatePlant], checkTypes,minimumEnergyAllowed);
 
     }
   }
 
 }
 
-function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant, checkTypes) {
+function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant, checkTypes ,minimumEnergyAllowed = 0) {
   // let distancePoiMap = new map();
   // let typePoiMap = new map();
   // let comboMap = new map();
@@ -563,12 +597,24 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
       continue;
     }
 
-    const energyArriving = (candidate.energyCap * 0.15) + (candidate.energy * (candidate.defense / 100));
+    // const energyArriving = (candidate.energyCap * 0.15) + (candidate.energy * (candidate.defense / 100));
+    // // needs to be a whole number for the contract
+    // const energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
+    // if (energyLeft - energyNeeded < candidatePlant.energyCap * (100 - maxEnergyPercent)*0.01) {
+    //   continue;
+    // }
+    // //set minimum above energy to % or 1 (if 0%), depending on minimumEnergyAllowed value
+
+    if (minimumEnergyAllowed === 0) minimumEnergyAllowed = 1
+    else
+      minimumEnergyAllowed = candidate.energyCap * minimumEnergyAllowed / 100
+    const energyArriving = minimumEnergyAllowed + (candidate.energy * (candidate.defense / 100));
     // needs to be a whole number for the contract
     const energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
     if (energyLeft - energyNeeded < candidatePlant.energyCap * (100 - maxEnergyPercent)*0.01) {
       continue;
     }
+
 
     if (from.planetType === 1 && candidate.planetType === 0) {
       silverNeed = candidate.silverCap > silverLeft ? silverLeft : candidate.silverCap;
@@ -583,3 +629,4 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
 
   return moves;
 }
+
