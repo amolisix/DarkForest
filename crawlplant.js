@@ -283,7 +283,7 @@ class Plugin {
     }
 
 
-    
+
     container.appendChild(stepperLabel);
     container.appendChild(stepper);
     container.appendChild(percent);
@@ -444,15 +444,15 @@ function priorityCalculate(planetObject) {
       break;
     //Asteroid
     case 1:
-      priority = planetObject.planetLevel * 2;
+      priority = planetObject.planetLevel * 2.1;
       break;
     //spacetimerip
     case 3:
-      priority = planetObject.planetLevel * 1;
+      priority = planetObject.planetLevel * 2;
       break;
     //plant
     case 0:
-      priority = planetObject.planetLevel * 0.5;
+      priority = planetObject.planetLevel * 1.5;
       break;
     //Quasar
     case 4:
@@ -482,7 +482,7 @@ function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, 
       p.owner === df.account &&
       p.planetLevel >= minPlantLevelToUse &&
       p.planetLevel <= maxPlantLevelToUse
-    )).sort((a, b) =>  distance(poi[poiPlant][0], a) - distance(poi[poiPlant][0], b));
+    )).sort((a, b) => distance(poi[poiPlant][0], a) - distance(poi[poiPlant][0], b));
 
     for (let candidatePlant in candidates) {
 
@@ -497,14 +497,15 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
   // let distancePoiMap = new map();
   // let typePoiMap = new map();
   // let comboMap = new map();
+  checkTypes = JSON.parse('[' + String(checkTypes) + ']')
 
-  //
   let candidateCapturePlants;
   try {
     candidateCapturePlants = df.getPlanetsInRange(candidatePlant.locationId, maxEnergyPercent)
       .filter(p => (p.planetLevel >= minPlanetLevel &&
         p.owner !== df.account &&
-        players.includes(p.owner)
+        players.includes(p.owner) &&
+        checkTypes.includes(p.planetType)
       ));
   } catch (error) {
     return;
@@ -515,7 +516,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
   }).sort((a, b) => b[1] - a[1]);
 
 
-  checkTypes = JSON.parse('[' + String(checkTypes) + ']')
+
 
   const planet = candidatePlant;
   const from = candidatePlant;
@@ -559,7 +560,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
     const energyArriving = (candidate.energyCap * 0.15) + (candidate.energy * (candidate.defense / 100));
     // needs to be a whole number for the contract
     const energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
-    if (energyLeft - energyNeeded < 0) {
+    if (energyLeft - energyNeeded < candidatePlant.energyCap * (100 - maxEnergyPercent)*0.01) {
       continue;
     }
 
