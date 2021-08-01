@@ -587,7 +587,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
     const unconfirmed = df.getUnconfirmedMoves().filter(move => move.to === candidate.locationId)
     let energyUncomfired = 0;
     for (let moves in unconfirmed) {
-      energyUncomfired = energyUncomfired + moves.forces;
+      energyUncomfired = energyUncomfired + unconfirmed[moves].forces;
     }
     if (unconfirmed.length > 4 || energyUncomfired >= candidate.energy * (candidate.defense / 100)) {
       continue;
@@ -597,7 +597,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
     const arrivals = getArrivalsForPlanet(candidate.locationId);
     let energyOntheWay = 0;
     for (let moves in arrivals) {
-      energyOntheWay = energyOntheWay + moves.energyArriving;
+      energyOntheWay = energyOntheWay + arrivals[moves].energyArriving;
     }
     if (arrivals.length + unconfirmed.length > 4 || energyOntheWay + energyUncomfired >= candidate.energy * (candidate.defense / 100)) {
       continue;
