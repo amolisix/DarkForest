@@ -1,1 +1,9 @@
-Got it, thanks Doug. Nothing in particular, just wanted to know the best practices. I started using "ui.terminal.current.print" as a way of debugging on the console.
+// Got it, thanks Doug. Nothing in particular, just wanted to know the best practices. I started using "ui.terminal.current.print" as a way of debugging on the console.
+
+//   public getLocationOfPlanet(planetId: LocationId): WorldLocation | undefined {
+//     return this.planetLocationMap.get(planetId) || undefined;
+//   }
+//   error
+
+const from = df.getPlanetWithId("00002d2c000c77b3d4ebc408a56c77849c52e447509327ea54ad0d7385deae72");
+ ui.centerPlanet(from)
