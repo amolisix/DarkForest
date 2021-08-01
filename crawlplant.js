@@ -7,6 +7,15 @@ const {
   canHaveArtifact,
 } = await import('https://plugins.zkga.me/utils/utils.js');
 
+import { EMPTY_ADDRESS } from "https://cdn.skypack.dev/@darkforest_eth/constants";
+import {
+  PlanetType,
+  PlanetTypeNames,
+  PlanetLevel,
+  PlanetLevelNames,
+} from "https://cdn.skypack.dev/@darkforest_eth/types";
+
+
 const planetTypes = {
   'Planet': 0,
   'Asteroid': 1,
@@ -18,7 +27,7 @@ const planetTypes = {
 const planetLevels = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 const players = [
-  "0x0000000000000000000000000000000000000000",
+  EMPTY_ADDRESS
 ];
 
 const typeNames = Object.keys(planetTypes);
@@ -31,7 +40,7 @@ const checkTypes = [];
 let poi = [];
 class Plugin {
   constructor() {
-    this.planetType = 1;
+    this.planetType =  PlanetType.SILVER_MINE;
     this.minimumEnergyAllowed = 15;
     this.minPlanetLevel = 3;
     this.maxEnergyPercent = 85;
