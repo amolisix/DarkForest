@@ -562,10 +562,17 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
   const silverBudget = Math.floor(from.silver);
 
   // Rejected if has pending outbound moves
-  const unconfirmed = df.getUnconfirmedMoves().filter(move => move.from === from.locationId)
-  if (unconfirmed.length > 4) {
+  const energyUncomfired = df.getUnconfirmedMoves().filter(move => move.from === from.locationId)
+  let energyUncomfiredOnTheWay = 0;
+  for (let moves in energyUncomfired) {
+    energyUncomfiredOnTheWay = energyUncomfiredOnTheWay+ energyUncomfired[moves].forces;
+  }
+  if (energyUncomfired.length > 4 || (candidatePlant.energy - energyUncomfiredOnTheWay) <= candidatePlant.energyCap *  (1 - maxEnergyPercent) * 0.01) {
     return 0;
   }
+  // if (unconfirmed.length > 4) {
+  //   return 0;
+  // }
 
 
   let i = 0;
@@ -603,20 +610,28 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
       continue;
     }
 
-
+    const energyUncomfiredfrom = df.getUnconfirmedMoves().filter(move => move.from === from.locationId);
+    let energyUncomfiredOnTheWay = 0;
+    for (let moves in energyUncomfiredfrom) {
+      energyUncomfiredOnTheWay = energyUncomfiredOnTheWay+ energyUncomfiredfrom[moves].forces;
+    }
+    if (energyUncomfired.length > 4 || (candidatePlant.energy - energyUncomfiredOnTheWay) <= candidatePlant.energyCap *  (1 - maxEnergyPercent) * 0.01) {
+      continue;
+    }
+    
     if (minimumEnergyAllowed === 0) minimumEnergyAllowed = 1
     else
       minimumEnergyAllowed = candidate.energyCap * minimumEnergyAllowed / 100
     const energyArriving = minimumEnergyAllowed + (candidate.energy * (candidate.defense / 100));
     // needs to be a whole number for the contract
     const energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
-    if (energyLeft - energyNeeded < candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01) {
+    if (energyLeft - energyNeeded-energyUncomfiredOnTheWay < candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01) {
 
       if (allowMultiCrawl === true) {
-        if (energyLeft <= energyNeeded * 0.5)
+        if (energyLeft-energyUncomfiredOnTheWay <= energyNeeded * 0.5)
           continue;
         else {
-          energyNeeded = energyLeft - candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01;
+          energyNeeded = energyLeft-energyUncomfiredOnTheWay - candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01;
         }
       }
       else
@@ -634,7 +649,5 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
     energySpent += energyNeeded;
     moves += 1;
   }
-
   return moves;
 }
-
