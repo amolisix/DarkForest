@@ -471,37 +471,39 @@ function calculatePoi(minCaptureLevel, checkTypes) {
     .map(to => {
       return [to, priorityCalculate(to)]
     })
-    .sort((a, b) => b[1] - a[1]);
+    .sort((a, b) => a[1] - b[1]);
   console.log("poi");
 }
 
 function priorityCalculate(planetObject) {
   let priority = 0;
-  switch (planetObject.planetType) {
-    //fountry
-    case 2:
-      priority = planetObject.planetLevel * 3;
-      break;
-    //Asteroid
-    case 1:
-      priority = planetObject.planetLevel * 2.1;
-      break;
-    //spacetimerip
-    case 3:
-      priority = planetObject.planetLevel * 2;
-      break;
-    //plant
-    case 0:
-      priority = planetObject.planetLevel * 1.5;
-      break;
-    //Quasar
-    case 4:
-      priority = 0;
-      break;
-    default:
-      break;
-  }
+  // switch (planetObject.planetType) {
+  //   //fountry
+  //   case 2:
+  //     priority = planetObject.planetLevel * 3;
+  //     break;
+  //   //Asteroid
+  //   case 1:
+  //     priority = planetObject.planetLevel * 2.1;
+  //     break;
+  //   //spacetimerip
+  //   case 3:
+  //     priority = planetObject.planetLevel * 2;
+  //     break;
+  //   //plant
+  //   case 0:
+  //     priority = planetObject.planetLevel * 1.5;
+  //     break;
+  //   //Quasar
+  //   case 4:
+  //     priority = 0;
+  //     break;
+  //   default:
+  //     break;
+  // }
 
+  priority = Math.sqrt((planetObject.coords.x - 0) ** 2 + (planetObject.coords.y - 0) ** 2);
+  
   return priority;
 
 }
