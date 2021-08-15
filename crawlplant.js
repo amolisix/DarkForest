@@ -1,6 +1,9 @@
-// Crawl Planets
+// Auto Crawl Planets
 //
-// Capture unowned planets around you!
+// 1.basically this plugin will auto crawl plants around, but it will calculate the priority first, high level plant has more priority, and if the plugin cant get the high priority 
+// plant, then it will choose a plant nearby and towards the high priority plant, you can change the priority calculate function.
+// 2.the plugin allow multi crawl if you check the multi crawl button, which means the plugin will send energy to the plant even cant grap plant in a single transfer
+// 3.in darkforest Round3, this plugin will crawl plants towards the center, which means plants near center has much higher priority.
 const {
   isMine,
   isUnowned,
@@ -366,7 +369,7 @@ class Plugin {
     allowMultiCrawlPlantCheck.checked = false;
     allowMultiCrawlPlantCheck.onchange = (evt) => {
       if (evt.target.checked) {
-        this.allowMultiCrawl = True;
+        this.allowMultiCrawl = true;
       } else {
         this.allowMultiCrawl = false;
       }
@@ -477,36 +480,46 @@ function calculatePoi(minCaptureLevel, checkTypes) {
 
 function priorityCalculate(planetObject) {
   let priority = 0;
-  // switch (planetObject.planetType) {
-  //   //fountry
-  //   case 2:
-  //     priority = planetObject.planetLevel * 3;
-  //     break;
-  //   //Asteroid
-  //   case 1:
-  //     priority = planetObject.planetLevel * 2.1;
-  //     break;
-  //   //spacetimerip
-  //   case 3:
-  //     priority = planetObject.planetLevel * 2;
-  //     break;
-  //   //plant
-  //   case 0:
-  //     priority = planetObject.planetLevel * 1.5;
-  //     break;
-  //   //Quasar
-  //   case 4:
-  //     priority = 0;
-  //     break;
-  //   default:
-  //     break;
-  // }
+  priority = Math.sqrt((planetObject.location.coords.x - 0) ** 2 + (planetObject.location.coords.y - 0) ** 2);
 
-  priority = Math.sqrt((planetObject.coords.x - 0) ** 2 + (planetObject.coords.y - 0) ** 2);
+  return priority;
+
+}
+
+function priorityinlevelCalculate(planetObject) {
+  let priority = 0;
+  switch (planetObject.planetType) {
+    //fountry
+    case 2:
+      priority = planetObject.planetLevel * 3;
+      break;
+    //Asteroid
+    case 1:
+      priority = planetObject.planetLevel * 2.1;
+      break;
+    //spacetimerip
+    case 3:
+      priority = planetObject.planetLevel * 2;
+      break;
+    //plant
+    case 0:
+      priority = planetObject.planetLevel * 1.5;
+      break;
+    //Quasar
+    case 4:
+      priority = 0;
+      break;
+    default:
+      break;
+  }
+
+  //priority = Math.sqrt((planetObject.coords.x - 0) ** 2 + (planetObject.coords.y - 0) ** 2);
   
   return priority;
 
 }
+
+
 
 function crawlPlantForPoi(minPlanetLevel, maxEnergyPercent, minPlantLevelToUse, maxPlantLevelToUse, minimumEnergyAllowed, allowMultiCrawl) {
   debugger;
@@ -552,7 +565,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
   }
 
   let comboMap = candidateCapturePlants.map(p => {
-    return [p, priorityCalculate(p) + distance(poiPlant, candidatePlant) / distance(poiPlant, p)]
+    return [p, priorityinlevelCalculate(p) + distance(poiPlant, candidatePlant) / distance(poiPlant, p)]
   }).sort((a, b) => b[1] - a[1]);
 
 
@@ -626,11 +639,11 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
       minimumEnergyAllowed = candidate.energyCap * minimumEnergyAllowed / 100
     const energyArriving = minimumEnergyAllowed + (candidate.energy * (candidate.defense / 100));
     // needs to be a whole number for the contract
-    const energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
+    let energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
     if (energyLeft - energyNeeded-energyUncomfiredOnTheWay < candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01) {
 
       if (allowMultiCrawl === true) {
-        if (energyLeft-energyUncomfiredOnTheWay <= energyNeeded * 0.5)
+        if (energyLeft-energyUncomfiredOnTheWay <= energyNeeded * 0.35)
           continue;
         else {
           energyNeeded = energyLeft-energyUncomfiredOnTheWay - candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01;
