@@ -585,9 +585,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
   if (energyUncomfired.length > 4 || (candidatePlant.energy - energyUncomfiredOnTheWay) <= candidatePlant.energyCap *  (1 - maxEnergyPercent) * 0.01) {
     return 0;
   }
-  // if (unconfirmed.length > 4) {
-  //   return 0;
-  // }
+
 
 
   let i = 0;
@@ -630,7 +628,8 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
     for (let moves in energyUncomfiredfrom) {
       energyUncomfiredOnTheWay = energyUncomfiredOnTheWay+ energyUncomfiredfrom[moves].forces;
     }
-    if (energyUncomfired.length > 4 || (candidatePlant.energy - energyUncomfiredOnTheWay) <= candidatePlant.energyCap *  (1 - maxEnergyPercent) * 0.01) {
+
+    if (energyUncomfiredfrom.length + df.getAllVoyages().filter(arrival => arrival.fromPlanet === from.locationId).length  > 4 || (candidatePlant.energy - energyUncomfiredOnTheWay) <= candidatePlant.energyCap *  (1 - maxEnergyPercent) * 0.01) {
       continue;
     }
     
@@ -640,13 +639,17 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
     const energyArriving = minimumEnergyAllowed + (candidate.energy * (candidate.defense / 100));
     // needs to be a whole number for the contract
     let energyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving));
+    let multiCrawlEnergyNeeded = Math.ceil(df.getEnergyNeededForMove(candidatePlant.locationId, candidate.locationId, energyArriving*0.35));
     if (energyLeft - energyNeeded-energyUncomfiredOnTheWay < candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01) {
 
       if (allowMultiCrawl === true) {
-        if (energyLeft-energyUncomfiredOnTheWay <= energyNeeded * 0.35)
+        if (energyLeft-multiCrawlEnergyNeeded-energyUncomfiredOnTheWay < candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01)
           continue;
         else {
-          energyNeeded = energyLeft-energyUncomfiredOnTheWay - candidatePlant.energyCap * (100 - maxEnergyPercent) * 0.01;
+
+          // if (df.getAllVoyages().filter(arrival => arrival.fromPlanet === from.locationId).length  > 1)
+          //    continue;
+          energyNeeded = multiCrawlEnergyNeeded;
         }
       }
       else
@@ -659,7 +662,7 @@ function crawlPlantMy(minPlanetLevel, maxEnergyPercent, poiPlant, candidatePlant
       silverSpent += silverNeed;
     }
 
-    df.move(candidatePlant.locationId, candidate.locationId, energyNeeded, silverNeed);
+    df.move(candidatePlant.locationId, candidate.locationId, energyNeeded, 0);
 
     energySpent += energyNeeded;
     moves += 1;
